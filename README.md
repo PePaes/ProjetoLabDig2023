@@ -7,4 +7,4 @@ Verificar se todos os arquivos são mostrados no ambiente, compilar e programar 
 O jogo, por definição, estará no estado de repouso. Aperte o "switch" X para iniciar o jogo (após este momento este botão pode ser resetado pelo usuário).
 Cada um dos "switches" declarados funciona como o martelo para acertar a marmota (led).
 
-Após 60 segundos, o jogo chega ao fim, e o usuário recebe a comparação do score que obteve com o High-Score. Este estado dura alguns segundos, e o jogo volta ao repouso.
+Após o tempo de 60 segundos, o jogo chega ao fim, e o usuário recebe a comparação do score que obteve com o High-Score. Este estado dura alguns segundos, e o jogo volta ao repouso.
