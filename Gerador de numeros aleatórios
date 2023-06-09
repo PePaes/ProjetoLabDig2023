@@ -1,0 +1,31 @@
+entity Random_Generator is
+    port (
+        clk : in std_logic;
+        stop : in std_logic;
+        random_num : out std_logic_vector(7 downto 0)
+    );
+end entity Random_Generator;
+
+architecture Behavioral of Random_Generator is
+    signal seed : unsigned(31 downto 0);
+
+begin
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if stop = '1' then
+                seed <= (others => '0');
+            else
+                seed <= seed + 1;
+            end if;
+        end if;
+    end process;
+
+    process (seed)
+        variable gen : std_random := new std_random(seed);
+    begin
+        wait until rising_edge(clk);
+        random_num <= std_logic_vector(to_unsigned(gen.random(gen'range), random_num'length));
+    end process;
+
+end architecture Behavioral;
