@@ -1,0 +1,121 @@
+entity Whack_a_Mole is
+    port (
+        clk_50MHz : in std_logic;
+        reset : in std_logic;
+        hit : in std_logic;
+        mole_pos : out std_logic_vector(7 downto 0);
+        time_remaining : out std_logic_vector(23 downto 0);
+        stop_game : out std_logic;
+        points : in std_logic_vector(7 downto 0);
+        record_score : in std_logic_vector(7 downto 0);
+        display_out : out std_logic_vector(7 downto 0)
+    );
+end entity Whack_a_Mole;
+
+architecture Behavioral of Whack_a_Mole is
+    signal timer_reset : std_logic;
+    signal timer_stop : std_logic;
+    signal time_left : unsigned(23 downto 0);
+    signal random_num : unsigned(7 downto 0);
+    signal mole_active : std_logic;
+    signal hit_mole : std_logic;
+    signal game_points : unsigned(7 downto 0);
+    signal record_score_updated : std_logic;
+    signal display_score : std_logic_vector(7 downto 0);
+
+begin
+    Timer: entity work.Timer_60s
+        port map (
+            clk => clk_50MHz,
+            reset => timer_reset,
+            time_remaining => time_remaining,
+            stop_game => timer_stop
+        );
+
+    Random_Generator: entity work.Random_Generator
+        port map (
+            clk => clk_50MHz,
+            stop => timer_stop,
+            random_num => random_num
+        );
+
+    Points_Counter: entity work.Points_Counter
+        port map (
+            hit => hit,
+            reset => reset,
+            mole_active => mole_active,
+            points => game_points
+        );
+
+    Record_Verifier: entity work.Record_Verifier
+        port map (
+            points => game_points,
+            record_score => record_score,
+            record_updated => record_score_updated
+        );
+
+    Display: entity work.Display
+        port map (
+            points => game_points,
+            record_score => record_score,
+            clk => clk_50MHz,
+            display_out => display_score
+        );
+
+    process (reset, timer_stop)
+    begin
+        if reset = '1' then
+            timer_reset <= '1';
+            game_points <= (others => '0');
+            record_score_updated <= '0';
+        elsif timer_stop = '1' then
+            timer_reset <= '1';
+            game_points <= (others => '0');
+            record_score_updated <= '1';
+        else
+            timer_reset <= '0';
+        end if;
+    end process;
+
+    process (clk_50MHz, timer_stop, hit_mole)
+    begin
+        if rising_edge(clk_50MHz) then
+            if timer_stop = '1' or hit_mole = '1' then
+                mole_active <= '0';
+            elsif timer_stop = '0' and hit_mole = '0' and mole_active = '0' then
+                mole_active <= '1';
+            end if;
+        end if;
+    end process;
+
+    process (game_points, record_score, reset)
+    begin
+        if reset = '1' then
+            record_score_updated <= '0';
+        elsif game_points > unsigned(record_score) then
+            record_score_updated <= '1';
+        else
+            record_score_updated <= '0';
+        end if;
+    end process;
+
+    process (clk_50MHz)
+    begin
+        if rising_edge(clk_50MHz) then
+            if timer_reset = '1' then
+                time_left <= unsigned(GAME_TIME * CLOCK_FREQ);
+            elsif time_left = 0 then
+                time_left <= 0;
+            else
+                time_left <= time_left - 1;
+            end if;
+        end if;
+    end process;
+
+    time_remaining <= std_logic_vector(time_left);
+    mole_pos <= std_logic_vector(random_num);
+    hit_mole <= hit;
+    display_out <= display_score;
+    stop_game <= timer_stop;
+
+end architecture Behavioral;
