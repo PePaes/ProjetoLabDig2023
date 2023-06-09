@@ -1,0 +1,87 @@
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity Display is
+    port (
+        points : in std_logic_vector(7 downto 0);
+        record_score : in std_logic_vector(7 downto 0);
+        clk : in std_logic;
+        display_out : out std_logic_vector(7 downto 0)
+    );
+end entity Display;
+
+architecture Behavioral of Display is
+    component SevenSegmentDisplay is
+        port (
+            clk : in std_logic;
+            data : in std_logic_vector(7 downto 0);
+            display_out : out std_logic_vector(7 downto 0)
+        );
+    end component SevenSegmentDisplay;
+
+    signal display_points : std_logic_vector(7 downto 0);
+    signal display_record : std_logic_vector(7 downto 0);
+
+begin
+    process (points, record_score)
+    begin
+        display_points <= points;
+        display_record <= record_score;
+    end process;
+
+    Display_Points: SevenSegmentDisplay
+        port map (
+            clk => clk,
+            data => display_points,
+            display_out => display_out(3 downto 0)
+        );
+
+    Display_Record: SevenSegmentDisplay
+        port map (
+            clk => clk,
+            data => display_record,
+            display_out => display_out(7 downto 4)
+        );
+
+end architecture Behavioral;
+
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity SevenSegmentDisplay is
+    port (
+        clk : in std_logic;
+        data : in std_logic_vector(7 downto 0);
+        display_out : out std_logic_vector(7 downto 0)
+    );
+end entity SevenSegmentDisplay;
+
+architecture Behavioral of SevenSegmentDisplay is
+    signal display_reg : std_logic_vector(7 downto 0);
+    signal digit_select : std_logic_vector(3 downto 0);
+
+begin
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if digit_select = "0111" then
+                display_reg <= data;
+            else
+                display_reg <= "11111110";
+            end if;
+
+            if digit_select = "1000" then
+                digit_select <= "0001";
+            else
+                digit_select <= digit_select + 1;
+            end if;
+        end if;
+    end process;
+
+    display_out <= display_reg;
+
+end architecture Behavioral;
